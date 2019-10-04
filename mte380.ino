@@ -1,5 +1,7 @@
 #include "Servo.h"
 
+void moveAll(int s1, int s2, int s3, int s4, int s5, int s6);
+
 // joystick
 int jsx = 0;
 int jsy = 0;  
@@ -44,6 +46,12 @@ void setup() {
   servo4.attach(9);
   servo5.attach(10);
   servo6.attach(11);
+  
+  servo1.write(pos1[0]);
+  servo2.write(pos2[0]);
+  servo3.write(pos3[0]);
+  servo4.write(pos4[0]);
+  servo5.write(pos5[0]);
   servo6.write(pos6[0]);
  }
 
@@ -153,7 +161,7 @@ void loop() {
       }
     }
 
-    delay(1000);
+    delay(500);
 
     // set them all back to initial position
     servo1.write(pos1[0]);
@@ -164,5 +172,4 @@ void loop() {
     servo6.write(pos6[0]);
     delay(500);
   }
-  
 }
