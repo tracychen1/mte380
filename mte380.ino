@@ -5,9 +5,10 @@ void moveAll(int s1, int s2, int s3, int s4, int s5, int s6);
 // joystick
 int jsx = 0;
 int jsy = 0;  
-int bound1 = 300;
-int bound2 = 800;
-int pin = 0;
+int b1 = 100;
+int b2 = 400;
+int b3 = 600;
+int b4 = 900; 
 
 // servos
 Servo servo1;
@@ -21,20 +22,26 @@ Servo servo6;
 // 0 position is when it can't turn CW anymore
 // tilt is for 5 degrees
 // flat, forward, backward, left, right 
-int pos1[] = {102, 88, 116, 93, 113};
-int pos2[] = {102, 92, 117, 113, 93};
-int pos3[] = {109, 104, 109, 127, 93};
-int pos4[] = {109, 128, 97, 116, 104};
-int pos5[] = {109, 123, 96, 104, 116};
-int pos6[] = {109, 107, 118, 93, 127};
+int pos1 = 102;
+int pos2 = 102; 
+int pos3 = 109;
+int pos4 = 109;
+int pos5 = 109;
+int pos6 = 109;
 
 // to tilt platform by 1 degree in forward/back
 // pos is forward
 double forBack[] = {2.796, 2.519, 0.405, -3.122, -2.723, 1.082};
 
 // to tilt platform by 1 degree in left/right
-// positive is 
+// positive is left
 double leftRight[] = {2.008, -2.011, -3.399, -1.155, 1.156, 3.405};
+
+// positive is forward/left
+double forLeftBackRight[] = {1.283, 3.343, 2.308, -1.915, -3.119, -1.024};
+
+// positive is forward/right
+double forRightBackLeft[] = {3.34, 1.231, -1.023, -3.122, -1.912, 2.312};
 
 // ------------------------------------
 
@@ -47,13 +54,8 @@ void setup() {
   servo4.attach(9);
   servo5.attach(10);
   servo6.attach(11);
-  
-  servo1.write(pos1[0]);
-  servo2.write(pos2[0]);
-  servo3.write(pos3[0]);
-  servo4.write(pos4[0]);
-  servo5.write(pos5[0]);
-  servo6.write(pos6[0]);
+
+  moveAll(pos1, pos2, pos3, pos4, pos5, pos6);
  }
 
 void loop() {
@@ -67,38 +69,34 @@ void loop() {
   // we are just considering moving the joystick in 4 directions
   // so don't move on the diagonals
   bool moved = false;
-  double count=0;
-  double x = 0, y = 0; // 0: no change | positive: right/up | negative: left/down
+  double count = 0;
+  // 0: no change | positive: right/up | negative: left/down 
+  double x = 0, y = 0, frbl = 0, flbr = 0;
 
+  Serial.print("jsx: "); Serial.print(jsx); Serial.print(" jsy: "); Serial.println(jsy); 
+  
   // LEFT
   if (!moved) {
-    while (jsx < bound1) {
-      x = -0.5;
-      servo1.write(pos1[0] + leftRight[0]*x*count);
-      servo2.write(pos2[0] + leftRight[1]*x*count);
-      servo3.write(pos3[0] + leftRight[2]*x*count);
-      servo4.write(pos4[0] + leftRight[3]*x*count);
-      servo5.write(pos5[0] + leftRight[4]*x*count);
-      servo6.write(pos6[0] + leftRight[5]*x*count);
-  
+    while (jsx < b1 && jsy > b2 && jsy < b3) {
+      Serial.println("left");
+      x = -1;
+      moveAll(pos1 + leftRight[0]*x*count, pos2 + leftRight[1]*x*count, pos3 + leftRight[2]*x*count,
+              pos4 + leftRight[3]*x*count, pos5 + leftRight[4]*x*count, pos6 + leftRight[5]*x*count);
       delay(100);
       count++;
       jsx = analogRead(A0);
+      jsy = analogRead(A1);
       moved = true;
     }
   }
 
   // RIGHT
   if (!moved) {
-    while (jsx > bound2) {
-      x = 0.5;
-      servo1.write(pos1[0] + leftRight[0]*x*count);
-      servo2.write(pos2[0] + leftRight[1]*x*count);
-      servo3.write(pos3[0] + leftRight[2]*x*count);
-      servo4.write(pos4[0] + leftRight[3]*x*count);
-      servo5.write(pos5[0] + leftRight[4]*x*count);
-      servo6.write(pos6[0] + leftRight[5]*x*count);
-  
+    while (jsx > b4 && jsy > b2 && jsy < b3) {
+      Serial.println("right");
+      x = 1;
+      moveAll(pos1 + leftRight[0]*x*count, pos2 + leftRight[1]*x*count, pos3 + leftRight[2]*x*count,
+              pos4 + leftRight[3]*x*count, pos5 + leftRight[4]*x*count, pos6 + leftRight[5]*x*count);
       delay(100);
       count++;
       jsx = analogRead(A0);
@@ -107,111 +105,134 @@ void loop() {
     } 
   }
   
-  // DOWN
+  // FORWARD
   if (!moved) {
-    while (jsy < bound1) {
-      y = -0.5;
-      servo1.write(pos1[0] + forBack[0]*y*count);
-      servo2.write(pos2[0] + forBack[1]*y*count);
-      servo3.write(pos3[0] + forBack[2]*y*count);
-      servo4.write(pos4[0] + forBack[3]*y*count);
-      servo5.write(pos5[0] + forBack[4]*y*count);
-      servo6.write(pos6[0] + forBack[5]*y*count);
-  
+    while (jsy < b1 && jsx > b2 && jsx < b3) {
+      Serial.println("forward");
+      y = -1;
+      moveAll(pos1 + forBack[0]*y*count, pos2 + forBack[1]*y*count, pos3 + forBack[2]*y*count,
+              pos4 + forBack[3]*y*count, pos5 + forBack[4]*y*count, pos6 + forBack[5]*y*count);
       delay(100);
       count++;
       jsy = analogRead(A1);
+      jsx = analogRead(A0);
       moved = true;
     } 
   }
 
-  // UP
-  bool diagonal = false; 
+  // BACKWARD
   if (!moved) {
-    while (jsy > bound2) {
-      Serial.println("Moving up");
-      if (jsx < bound1 || jsx > bound2) {
-        Serial.println("Diagonal cut to x");
-        diagonal = true;
-        break;
-      }
-      
-      y = 0.5;
-      servo1.write(pos1[0] + forBack[0]*y*count);
-      servo2.write(pos2[0] + forBack[1]*y*count);
-      servo3.write(pos3[0] + forBack[2]*y*count);
-      servo4.write(pos4[0] + forBack[3]*y*count);
-      servo5.write(pos5[0] + forBack[4]*y*count);
-      servo6.write(pos6[0] + forBack[5]*y*count);
-      
+    while (jsy > b4 && jsx > b2 && jsx < b3) {
+      Serial.println("backward");
+      y = 1;
+      moveAll(pos1 + forBack[0]*y*count, pos2 + forBack[1]*y*count, pos3 + forBack[2]*y*count,
+              pos4 + forBack[3]*y*count, pos5 + forBack[4]*y*count, pos6 + forBack[5]*y*count);
       delay(100);
       count++;
       jsy = analogRead(A1);
       jsx = analogRead(A0);
       moved = true;
     }
-    
-    if (diagonal) {
-      
+  }
+
+  // foward right
+  if (!moved) {
+    while (jsx < b2 && jsy < b2) {
+      Serial.println("forward right");
+      frbl = -1;
+      int mult = frbl*count;
+      moveAll(pos1 + forRightBackLeft[0]*mult, pos2 + forRightBackLeft[1]*mult, pos3 + forRightBackLeft[2]*mult,
+              pos4 + forRightBackLeft[3]*mult, pos5 + forRightBackLeft[4]*mult, pos6 + forRightBackLeft[5]*mult);
+      delay(100);
+      count++;
+      jsx = analogRead(A0);
+      jsy = analogRead(A1);
+      moved = true;
     }
-    
   }
 
-  // -------- for jerking -----------
-  
-  double f = 3;
-  bool fed = false;
-  pin = digitalRead(2);
-  delay(100);
-  
-  if (!moved && pin) {
-    Serial.println("Jerk the platform");
-    servo1.write(pos1[0] + leftRight[0]*f);
-    servo2.write(pos2[0] + leftRight[1]*f);
-    servo3.write(pos3[0] + leftRight[2]*f);
-    servo4.write(pos4[0] + leftRight[3]*f);
-    servo5.write(pos5[0] + leftRight[4]*f);
-    servo6.write(pos6[0] + leftRight[5]*f);
-    fed = true;
+  // backward left
+  if (!moved) {
+    while (jsx > b3 && jsy > b3) {
+      Serial.println("backward left");
+      frbl = 1;
+      int mult = frbl*count;
+      moveAll(pos1 + forRightBackLeft[0]*mult, pos2 + forRightBackLeft[1]*mult, pos3 + forRightBackLeft[2]*mult,
+              pos4 + forRightBackLeft[3]*mult, pos5 + forRightBackLeft[4]*mult, pos6 + forRightBackLeft[5]*mult);
+      delay(100);
+      count++;
+      jsx = analogRead(A0);
+      jsy = analogRead(A1);
+      moved = true;
+    }
   }
 
-  delay(500);
-
-  if (fed) {
-    Serial.println("Move the platform back from jerking");
-    servo1.write(pos1[0]);
-    servo2.write(pos2[0]);
-    servo3.write(pos3[0]);
-    servo4.write(pos4[0]);
-    servo5.write(pos5[0]);
-    servo6.write(pos6[0]);
+  // forward left
+  if (!moved) {
+    while (jsx > b3 && jsy < b2) {
+      Serial.println("forward left");
+      flbr = 1; 
+      int mult = flbr*count;
+      moveAll(pos1 + forLeftBackRight[0]*mult, pos2 + forLeftBackRight[1]*mult, pos3 + forLeftBackRight[2]*mult,
+              pos4 + forLeftBackRight[3]*mult, pos5 + forLeftBackRight[4]*mult, pos6 + forLeftBackRight[5]*mult); 
+      delay(100);
+      count++;
+      jsx = analogRead(A0);
+      jsy = analogRead(A1);
+      moved = true;
+    }
   }
 
-  // -------- end jerking -----------
-  
+  // backward right
+  if (!moved) {
+    while (jsx < b2 && jsy > b3) {
+      Serial.println("backward right");
+      flbr = -1; 
+      int mult = flbr*count;
+      moveAll(pos1 + forLeftBackRight[0]*mult, pos2 + forLeftBackRight[1]*mult, pos3 + forLeftBackRight[2]*mult,
+              pos4 + forLeftBackRight[3]*mult, pos5 + forLeftBackRight[4]*mult, pos6 + forLeftBackRight[5]*mult); 
+      delay(100);
+      count++;
+      jsx = analogRead(A0);
+      jsy = analogRead(A1);
+      moved = true;
+    }
+  }
+
+  // ------------------------------------------
   // move it back to original plaform position
   if (moved) {
     if (x != 0) {
       while (count >= 0) {
-        servo1.write(pos1[0] + leftRight[0]*x*count);
-        servo2.write(pos2[0] + leftRight[1]*x*count);
-        servo3.write(pos3[0] + leftRight[2]*x*count);
-        servo4.write(pos4[0] + leftRight[3]*x*count);
-        servo5.write(pos5[0] + leftRight[4]*x*count);
-        servo6.write(pos6[0] + leftRight[5]*x*count);
+        moveAll(pos1 + leftRight[0]*x*count, pos2 + leftRight[1]*x*count, pos3 + leftRight[2]*x*count, 
+                pos4 + leftRight[3]*x*count, pos5 + leftRight[4]*x*count, pos6 + leftRight[5]*x*count);
         delay(100);
         count--;
       }
     }
 
-    else {
+    else if (y != 0) {
       while (count >= 0) {
-        servo1.write(pos1[0] + forBack[0]*y*count);
-        servo2.write(pos2[0] + forBack[1]*y*count);
-        servo3.write(pos3[0] + forBack[2]*y*count);
-        servo4.write(pos4[0] + forBack[3]*y*count);
-        servo5.write(pos5[0] + forBack[4]*y*count);
-        servo6.write(pos6[0] + forBack[5]*y*count);
+        moveAll(pos1 + forBack[0]*y*count, pos2 + forBack[1]*y*count, pos3 + forBack[2]*y*count, 
+                pos4 + forBack[3]*y*count, pos5 + forBack[4]*y*count, pos6 + forBack[5]*y*count); 
+        delay(100);
+        count--;
+      }
+    }
+    
+    else if (flbr != 0) {
+      while (count >= 0) {
+        moveAll(pos1 + forLeftBackRight[0]*flbr*count, pos2 + forLeftBackRight[1]*flbr*count, pos3 + forLeftBackRight[2]*flbr*count,
+                pos4 + forLeftBackRight[3]*flbr*count, pos5 + forLeftBackRight[4]*flbr*count, pos6 + forLeftBackRight[5]*flbr*count); 
+        delay(100);
+        count--;
+      }
+    }
+    
+    else if (frbl != 0) {
+      while (count >= 0) {
+        moveAll(pos1 + forRightBackLeft[0]*frbl*count, pos2 + forRightBackLeft[1]*frbl*count, pos3 + forRightBackLeft[2]*frbl*count,
+                pos4 + forRightBackLeft[3]*frbl*count, pos5 + forRightBackLeft[4]*frbl*count, pos6 + forRightBackLeft[5]*frbl*count);
         delay(100);
         count--;
       }
@@ -220,12 +241,16 @@ void loop() {
     delay(500);
 
     // set them all back to initial position
-    servo1.write(pos1[0]);
-    servo2.write(pos2[0]);
-    servo3.write(pos3[0]);
-    servo4.write(pos4[0]);
-    servo5.write(pos5[0]);
-    servo6.write(pos6[0]);
+    moveAll(pos1, pos2, pos3, pos4, pos5, pos6);
     delay(500);
   }
+}
+
+void moveAll(int s1, int s2, int s3, int s4, int s5, int s6) {
+    servo1.write(s1);
+    servo2.write(s2);
+    servo3.write(s3);
+    servo4.write(s4);
+    servo5.write(s5);
+    servo6.write(s6);
 }
