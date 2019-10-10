@@ -1,3 +1,6 @@
+// MTE 380 Stewart Platform Project
+// Group 14
+
 #include "Servo.h"
 
 void moveAll(int s1, int s2, int s3, int s4, int s5, int s6);
@@ -5,10 +8,10 @@ void moveAll(int s1, int s2, int s3, int s4, int s5, int s6);
 // joystick
 int jsx = 0;
 int jsy = 0;  
-int b1 = 100;
-int b2 = 400;
-int b3 = 600;
-int b4 = 900; 
+int b1 = 100; // when moving in x - y (no diagonal)
+int b2 = 400; // when moving in diagonal
+int b3 = 600; // when moving in diagonal
+int b4 = 900; // when moving in x - y (no diagonal)
 
 // servos
 Servo servo1;
@@ -18,10 +21,7 @@ Servo servo4;
 Servo servo5;
 Servo servo6;
 
-// positions
-// 0 position is when it can't turn CW anymore
-// tilt is for 5 degrees
-// flat, forward, backward, left, right 
+// initial positions of each servo's angle
 int pos1 = 102;
 int pos2 = 102; 
 int pos3 = 109;
@@ -37,13 +37,15 @@ double forBack[] = {2.796, 2.519, 0.405, -3.122, -2.723, 1.082};
 // positive is left
 double leftRight[] = {2.008, -2.011, -3.399, -1.155, 1.156, 3.405};
 
+// tilt platform by 1 degree diagonally
 // positive is forward/left
 double forLeftBackRight[] = {1.283, 3.343, 2.308, -1.915, -3.119, -1.024};
 
+// tilt platform by 1 degree diagonally
 // positive is forward/right
 double forRightBackLeft[] = {3.34, 1.231, -1.023, -3.122, -1.912, 2.312};
 
-// ------------------------------------
+// ------------------------------------------------------------------------
 
 void setup() {
   Serial.begin(9600);
@@ -58,6 +60,8 @@ void setup() {
   moveAll(pos1, pos2, pos3, pos4, pos5, pos6);
  }
 
+// ------------------------------------------------------------------------
+
 void loop() {
   // read the pins on the joystick
   // home position for joystick is at 511 (1023/2)
@@ -66,10 +70,11 @@ void loop() {
   jsy = analogRead(A1);
   delay(100);
 
-  // we are just considering moving the joystick in 4 directions
-  // so don't move on the diagonals
+  // we are just considering moving the joystick in 8 directions
+  // the platform must return to its resting position before moving again in another direction
   bool moved = false;
   double count = 0;
+  
   // 0: no change | positive: right/up | negative: left/down 
   double x = 0, y = 0, frbl = 0, flbr = 0;
 
@@ -80,8 +85,9 @@ void loop() {
     while (jsx < b1 && jsy > b2 && jsy < b3) {
       Serial.println("left");
       x = -1;
-      moveAll(pos1 + leftRight[0]*x*count, pos2 + leftRight[1]*x*count, pos3 + leftRight[2]*x*count,
-              pos4 + leftRight[3]*x*count, pos5 + leftRight[4]*x*count, pos6 + leftRight[5]*x*count);
+      int mult = x*count;
+      moveAll(pos1 + leftRight[0]*mult, pos2 + leftRight[1]*mult, pos3 + leftRight[2]*mult,
+              pos4 + leftRight[3]*mult, pos5 + leftRight[4]*mult, pos6 + leftRight[5]*mult);
       delay(100);
       count++;
       jsx = analogRead(A0);
@@ -95,8 +101,9 @@ void loop() {
     while (jsx > b4 && jsy > b2 && jsy < b3) {
       Serial.println("right");
       x = 1;
-      moveAll(pos1 + leftRight[0]*x*count, pos2 + leftRight[1]*x*count, pos3 + leftRight[2]*x*count,
-              pos4 + leftRight[3]*x*count, pos5 + leftRight[4]*x*count, pos6 + leftRight[5]*x*count);
+      int mult = x*count;
+      moveAll(pos1 + leftRight[0]*mult, pos2 + leftRight[1]*mult, pos3 + leftRight[2]*mult,
+              pos4 + leftRight[3]*mult, pos5 + leftRight[4]*mult, pos6 + leftRight[5]*mult);
       delay(100);
       count++;
       jsx = analogRead(A0);
@@ -110,8 +117,9 @@ void loop() {
     while (jsy < b1 && jsx > b2 && jsx < b3) {
       Serial.println("forward");
       y = -1;
-      moveAll(pos1 + forBack[0]*y*count, pos2 + forBack[1]*y*count, pos3 + forBack[2]*y*count,
-              pos4 + forBack[3]*y*count, pos5 + forBack[4]*y*count, pos6 + forBack[5]*y*count);
+      int mult = y*count;
+      moveAll(pos1 + forBack[0]*mult, pos2 + forBack[1]*mult, pos3 + forBack[2]*mult,
+              pos4 + forBack[3]*mult, pos5 + forBack[4]*mult, pos6 + forBack[5]*mult);
       delay(100);
       count++;
       jsy = analogRead(A1);
@@ -125,8 +133,9 @@ void loop() {
     while (jsy > b4 && jsx > b2 && jsx < b3) {
       Serial.println("backward");
       y = 1;
-      moveAll(pos1 + forBack[0]*y*count, pos2 + forBack[1]*y*count, pos3 + forBack[2]*y*count,
-              pos4 + forBack[3]*y*count, pos5 + forBack[4]*y*count, pos6 + forBack[5]*y*count);
+      int mult = y*count;
+      moveAll(pos1 + forBack[0]*mult, pos2 + forBack[1]*mult, pos3 + forBack[2]*mult,
+              pos4 + forBack[3]*mult, pos5 + forBack[4]*mult, pos6 + forBack[5]*mult);
       delay(100);
       count++;
       jsy = analogRead(A1);
@@ -199,7 +208,6 @@ void loop() {
     }
   }
 
-  // ------------------------------------------
   // move it back to original plaform position
   if (moved) {
     if (x != 0) {
@@ -246,6 +254,9 @@ void loop() {
   }
 }
 
+// ------------------------------------------------------------------------
+
+// Helper function to move all the servos given the angles
 void moveAll(int s1, int s2, int s3, int s4, int s5, int s6) {
     servo1.write(s1);
     servo2.write(s2);
