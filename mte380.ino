@@ -1,5 +1,6 @@
 // MTE 380 Stewart Platform Project
 // Group 14
+// Verification 1 - Maze solving
 
 #include "Servo.h"
 
