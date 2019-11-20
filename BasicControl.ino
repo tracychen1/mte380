@@ -8,6 +8,18 @@
  *  platform values in Config.h
  */
 
+ /*
+  * translation
+  * z range we should use (0 +25)
+  * x range we should use (-20 +20)
+  * y range we should use (-20 +20)
+  * 
+  * rotation
+  * z range we should use ()
+  * x range we should use (-0.1 +0.1)
+  * y range we should use (-0.1 +0.1)
+  */
+
 #include "Config.h"
 #include "StewartPlatform.h"
 #include <Servo.h>
@@ -17,7 +29,7 @@ StewartPlatform sp;
 Servo servos[6];
 float servosPosition[6];
 
-point_t translation = {0,0,0}, rotation = {0.1,0,0};
+point_t translation = {0,0,0}, rotation = {0,0,0};
 
 void setup() {
   Serial.begin(115200);  
@@ -38,11 +50,11 @@ void loop() {
   
   count = count + 1;
   if(count == 100){
-    translation.z = 2;
+    rotation.y = 0.0;
   }
   
   if(count == 500){
-    translation.z = -2;
+    rotation.y = -0.0;
     count = 0;
   }
 
@@ -50,59 +62,39 @@ void loop() {
   
   for(int i = 0; i < 6; i++){   
     servos[i].writeMicroseconds(servosPosition[i]);
-    
-    if (count == 500) {
-      Serial.print("position of servo "); Serial.print(i); Serial.print(": ");
-      Serial.println(servosPosition[i]); 
-    }
   }
-
-  delay(5);
 }
 
 int count2 = 0;
 float rawX = 0; float rawY = 0; float rawZ = 0;
-void readIMU(){
-  // Read IMU from A0, A1, A2
-  count2 = count2 + 1;
-  
-  if (count2 % 10 == 0){
-    //tempbool = false;
-     rawX = analogRead(A0);
-     rawY = analogRead(A1);
-     rawZ = analogRead(A2);
-
-     
-     int scale = 3;
-     float scaledX = mapf(rawX, 0, 1023, -scale, scale);
-     float scaledY = mapf(rawY, 0, 1023, -scale, scale);
-     float scaledZ = mapf(rawZ, 0, 1023, -scale, scale);
-
-     // Print out raw X,Y,Z accelerometer readings
-//    Serial.print("Y: "); Serial.println(rawY);
-  
-    // Print out scaled X,Y,Z accelerometer readings
-    //Serial.print("Y: "); Serial.print(scaledY); Serial.println(" g");
+void readIMU() {
+  count2 ++;
+  if (count2 % 50 == 0) { 
+    rawX = analogRead(A0);
+    rawY = analogRead(A1);
+    rawZ = analogRead(A2);
+    
+    int scale = 3;
+    float scaledX = mapf(rawX, 0, 1023, -scale, scale);
+    float scaledY = mapf(rawY, 0, 1023, -scale, scale);
+    float scaledZ = mapf(rawZ, 0, 1023, -scale, scale);
   
     float accelerationX = scaledX;
     float accelerationY = scaledY;
     float accelerationZ = scaledZ;
-    
-    float pitch = 180 * atan (accelerationX/sqrt(accelerationY*accelerationY + accelerationZ*accelerationZ))/PI;
-    float roll = 180 * atan (accelerationY/sqrt(accelerationX*accelerationX + accelerationZ*accelerationZ))/PI;
-    float yaw = 180 * atan (accelerationZ/sqrt(accelerationX*accelerationX + accelerationZ*accelerationZ))/PI;
-  
-    float rotX = pitch/360;
-    
-    if (abs(float((rotX-rotation.x)/rotation.x)) < 0.05){
-//      rotX = rotation.x;
-  }
-  
-  if(rotX < 0.1 && rotX > -0.1){
-//    rotation.x = rotX/2;
-//    Serial.println(rotX/2);
-  }
-  
+
+    // not sure if we followed this but useful: https://www.accuware.com/support/dragonfly-heading-pitch-yaw-roll/
+    // pitch is if camera is pointing up/down
+    // roll is + if camera is moving toward right, - if moving toward left
+    // yaw is + if camera is pointing to East, - if pointing to west 
+
+    float pitch = 180 * atan2(accelerationX, sqrt(accelerationY*accelerationY + accelerationZ*accelerationY))/PI;
+    float roll = 180 * atan2 (accelerationY, sqrt(accelerationX*accelerationX + accelerationZ*accelerationZ))/PI;
+    float yaw = 180 * atan2 (accelerationZ, sqrt(accelerationX*accelerationX + accelerationZ*accelerationZ))/PI;
+
+    Serial.print("PITCH "); Serial.println(pitch);
+    Serial.print("ROLL "); Serial.println(roll);
+    Serial.print("YAW "); Serial.println(yaw); Serial.println();
   }
 }
 
