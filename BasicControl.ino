@@ -9,15 +9,21 @@
  */
 
  /*
-  * translation
+  * TRANSLATION
   * z range we should use (0 +25)
   * x range we should use (-20 +20)
   * y range we should use (-20 +20)
   * 
-  * rotation
+  * ROTATION
   * z range we should use ()
   * x range we should use (-0.1 +0.1)
   * y range we should use (-0.1 +0.1)
+  * 
+  * IMU 
+  * pitch range is (-45,-31) rest value = -38
+  * roll range is (-49,-35) rest value = -42
+  * yaw range is (-30,-22) rest value = -26
+  * 
   */
 
 #include "Config.h"
@@ -30,6 +36,10 @@ Servo servos[6];
 float servosPosition[6];
 
 point_t translation = {0,0,0}, rotation = {0,0,0};
+
+int pitchSwitch = true;
+int rollSwitch = true;
+int yawSwitch = true;
 
 void setup() {
   Serial.begin(115200);  
@@ -47,16 +57,6 @@ void setup() {
 float count = 0;
 void loop() {  
   readIMU();
-  
-  count = count + 1;
-  if(count == 100){
-    rotation.y = 0.0;
-  }
-  
-  if(count == 500){
-    rotation.y = -0.0;
-    count = 0;
-  }
 
   sp.getServoPosition(translation, rotation, servosPosition);
   
@@ -92,9 +92,25 @@ void readIMU() {
     float roll = 180 * atan2 (accelerationY, sqrt(accelerationX*accelerationX + accelerationZ*accelerationZ))/PI;
     float yaw = 180 * atan2 (accelerationZ, sqrt(accelerationX*accelerationX + accelerationZ*accelerationZ))/PI;
 
-    Serial.print("PITCH "); Serial.println(pitch);
-    Serial.print("ROLL "); Serial.println(roll);
-    Serial.print("YAW "); Serial.println(yaw); Serial.println();
+    float pitchMap = mapf(pitch, -50,-25, -0.05, 0.05); // around y
+    float rollMap = mapf(roll, -50,-25, -0.05, 0.05); // around x
+    float yawMap = mapf(yaw, -30,-23, -0.05, 0.05); // around z
+
+    if(pitchSwitch){
+      rotation.y = pitchMap;
+    }
+    if(rollSwitch){
+      rotation.x = rollMap;
+    }
+    if(yawSwitch){
+      rotation.z = yawMap;
+    }
+
+    Serial.print("PITCH (around y) "); Serial.print(pitch); Serial.print(" "); Serial.println(pitchMap);
+    Serial.print("ROLL (around x) "); Serial.print(roll); Serial.print(" "); Serial.println(rollMap);
+    Serial.print("YAW (around z) "); Serial.print(yaw); Serial.print(" "); Serial.println(yawMap); 
+    
+    Serial.println();
   }
 }
 
