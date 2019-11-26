@@ -25,7 +25,7 @@
 /* Here you put the length of your servos arm . */
 #define LENGTH_SERVO_ARM 20 // 20
 /* Here you put the length of your rods length. */
-#define LENGTH_SERVO_LEG 180 // 200
+#define LENGTH_SERVO_LEG 200 // 200
 /* Here you put the default Heigh of your platform. 
  * This value should be close to yours rods length.
 */
