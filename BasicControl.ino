@@ -32,6 +32,17 @@ void setup() {
   servos[3].attach(9, MIN_SERVO_PULSE, MAX_SERVO_PULSE);
   servos[4].attach(10, MIN_SERVO_PULSE, MAX_SERVO_PULSE);
   servos[5].attach(11, MIN_SERVO_PULSE, MAX_SERVO_PULSE);
+
+  translation.z = 0;
+  rotation.x = 0;
+  rotation.y = 0;
+  rotation.z = 0;
+
+  sp.getServoPosition(translation, rotation, servosPosition);
+  for(int i = 0; i < 6; i++){   
+    servos[i].writeMicroseconds(servosPosition[i]);
+  }
+  delay(1500);
 }
 
 void loop() { 
@@ -49,9 +60,10 @@ void loop() {
 // into the functions to move servos
 void readIMU() {
   
-  int rawX = analogRead(A0);
-  int rawY = analogRead(A1);
-  int rawZ = analogRead(A2);
+  long rawX = readAxis(A0);
+  long rawY = readAxis(A1);
+  long rawZ = readAxis(A2);
+  unsigned long start_time = millis();
 
   delay(100);
   if (false) {
@@ -89,23 +101,59 @@ void readIMU() {
   int y_state = digitalRead(y_switch);
   int z_state = digitalRead(z_switch);
 
+  // pitch movement
   if (x_state == 0) {
     Serial.print("Pitch(x) is on, pitch is: "); Serial.println(pitch);
     rotation.x = mappedPitch * 2;
   }
-  
+
+  // roll movement
   if (y_state == 0) {
     Serial.print("Roll(x) is on, roll is: "); Serial.println(mappedRoll);
     rotation.y = -mappedRoll * 2;
   }
 
+  // z-translation
   if (z_state == 0) {
-    Serial.println("Z translation is on");
-    // do something
+    unsigned long end_time = millis();
+    unsigned long delta_time = abs(end_time - start_time);
+
+    float delta_z = 0.5 * (mappedZ) * 9.81 * pow(delta_time/1000.0, 2);
+    delta_z *= 100;
+
+    float tempZ = mapf(delta_z, 7,12,-10,10);
+    
+    Serial.print("Z translation is on, delta z: "); Serial.print(delta_z); Serial.print(" "); Serial.println(tempZ);
+    
+    if (tempZ < 15 && tempZ > -15){
+      translation.z = -tempZ;
+    }
   }
+
+  // reset all servos to rest position if all switches are off
+  if (x_state == 1 && y_state == 1 && z_state == 1) {
+    translation.z = 0;
+    rotation.x = 0;
+    rotation.y = 0;
+    rotation.z = 0;
+  }
+
+  Serial.println();
 }
 
 // Same functionality as Arduino's standard map function, except using floats
 float mapf(float x, float in_min, float in_max, float out_min, float out_max) {
   return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
+
+// Take samples and return the average
+long readAxis(int axisPin) {
+  long sampleSize = 10.0;
+  long reading = 0;
+  analogRead(axisPin);
+  delay(1);
+  for (int i = 0; i < sampleSize; i++) {
+    reading += analogRead(axisPin);
+  }
+  return reading/sampleSize;
 }
