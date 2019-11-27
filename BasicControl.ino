@@ -19,7 +19,7 @@ int z_rest=420, z_min=400, z_max=420;
 int range = 3;
 
 // switch pins to turn off/on
-const int x_switch = 2, y_switch = 4, z_switch = 7; 
+const int x_switch = 2, y_switch = 8, z_switch = 7; 
 
 float range_rotation_pitch = 0.3, range_rotation_roll = 0.3, range_rotation_yaw = 0.4;
 
@@ -60,12 +60,10 @@ void loop() {
 // into the functions to move servos
 void readIMU() {
   
-  long rawX = readAxis(A0);
-  long rawY = readAxis(A1);
-  long rawZ = readAxis(A2);
-  unsigned long start_time = millis();
-
-  delay(100);
+  int rawX = readAxis(A0);
+  int rawY = readAxis(A1);
+  int rawZ = readAxis(A2);
+  
   if (false) {
     Serial.print("x "); Serial.println(rawX); 
     Serial.print("y "); Serial.println(rawY); 
@@ -78,9 +76,7 @@ void readIMU() {
   float mappedX = mapf(rawX, x_min, x_max, -range, range);
   float mappedY = mapf(rawY, y_min, y_max, -range, range);
   float mappedZ = mapf(rawZ, z_min, z_max, -range, range);
-
-  float deltaZ = 0.5*(mappedZ-5.08)*9.81*pow(0.1,2);
-
+  
   float pitch = 180 * atan2(mappedX, sqrt(mappedY*mappedY + mappedZ*mappedZ))/PI;
   float roll = 180 * atan2 (mappedY, sqrt(mappedX*mappedX + mappedZ*mappedZ))/PI;
   float yaw = 180 * atan2 (mappedZ, sqrt(mappedX*mappedX + mappedZ*mappedZ))/PI;
@@ -101,37 +97,45 @@ void readIMU() {
   int y_state = digitalRead(y_switch);
   int z_state = digitalRead(z_switch);
 
-  // pitch movement
-  if (x_state == 0) {
-    Serial.print("Pitch(x) is on, pitch is: "); Serial.println(pitch);
-    rotation.x = mappedPitch * 2;
+  // for debugging switches
+  if (false) {
+    Serial.print("x switch value: "); Serial.println(x_state);
+    Serial.print("y switch value: "); Serial.println(y_state);
+    Serial.print("z switch value: "); Serial.println(z_state);
   }
 
-  // roll movement
+  // turn on y axis rotation
+  if (x_state == 0) {
+    Serial.print("Pitch(y) is on, pitch is: "); Serial.println(pitch);
+    rotation.x = mappedPitch * 3.5;
+  }
+
+  // turn on x axis rotation
   if (y_state == 0) {
     Serial.print("Roll(x) is on, roll is: "); Serial.println(mappedRoll);
-    rotation.y = -mappedRoll * 2;
+    rotation.y = -mappedRoll * 3;
   }
 
-  // z-translation
+  // turn on z translation
   if (z_state == 0) {
-    unsigned long end_time = millis();
-    unsigned long delta_time = abs(end_time - start_time);
+    Serial.println("Z translation is on");
 
-    float delta_z = 0.5 * (mappedZ) * 9.81 * pow(delta_time/1000.0, 2);
-    delta_z *= 100;
-
-    float tempZ = mapf(delta_z, 7,12,-10,10);
+    float mappedZ_translation = mapf(rawZ, 410, 420, -2, 2);
     
-    Serial.print("Z translation is on, delta z: "); Serial.print(delta_z); Serial.print(" "); Serial.println(tempZ);
+    // do something
+    float delta_z = (0.5 * mappedZ_translation * 9.81 * pow(1,2));
+    Serial.println(delta_z);
     
-    if (tempZ < 15 && tempZ > -15){
-      translation.z = -tempZ;
+    float currentZ = translation.z + delta_z;
+    if(currentZ > -15 && currentZ < 15){
+      translation.z = currentZ;
     }
+    Serial.print("Delta Z is "); Serial.println(delta_z);
   }
 
   // reset all servos to rest position if all switches are off
   if (x_state == 1 && y_state == 1 && z_state == 1) {
+    Serial.println("RESET TO REST");
     translation.z = 0;
     rotation.x = 0;
     rotation.y = 0;
@@ -148,7 +152,7 @@ float mapf(float x, float in_min, float in_max, float out_min, float out_max) {
 
 // Take samples and return the average
 long readAxis(int axisPin) {
-  long sampleSize = 10.0;
+  long sampleSize = 50.0;
   long reading = 0;
   analogRead(axisPin);
   delay(1);
