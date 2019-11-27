@@ -32,6 +32,17 @@ void setup() {
   servos[3].attach(9, MIN_SERVO_PULSE, MAX_SERVO_PULSE);
   servos[4].attach(10, MIN_SERVO_PULSE, MAX_SERVO_PULSE);
   servos[5].attach(11, MIN_SERVO_PULSE, MAX_SERVO_PULSE);
+
+  translation.z = 0;
+  rotation.x = 0;
+  rotation.y = 0;
+  rotation.z = 0;
+
+  sp.getServoPosition(translation, rotation, servosPosition);
+  for(int i = 0; i < 6; i++){   
+    servos[i].writeMicroseconds(servosPosition[i]);
+  }
+  delay(1500);
 }
 
 void loop() { 
@@ -52,7 +63,7 @@ void readIMU() {
   int rawX = readAxis(A0);
   int rawY = readAxis(A1);
   int rawZ = readAxis(A2);
-
+  
   if (false) {
     Serial.print("x "); Serial.println(rawX); 
     Serial.print("y "); Serial.println(rawY); 

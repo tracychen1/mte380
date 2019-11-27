@@ -25,15 +25,15 @@
 /* Here you put the length of your servos arm . */
 #define LENGTH_SERVO_ARM 20 // 20
 /* Here you put the length of your rods length. */
-#define LENGTH_SERVO_LEG 200 // 200
+#define LENGTH_SERVO_LEG 180 // 200
 /* Here you put the default Heigh of your platform. 
  * This value should be close to yours rods length.
 */
-#define PLATFORM_HEIGHT_DEFAULT 190 // 190
+#define PLATFORM_HEIGHT_DEFAULT 144 // 190
 /* Here you put the radius of the top of your platform. */
-#define PLATFORM_TOP_RADIUS 70 // 70
+#define PLATFORM_TOP_RADIUS 64 // 70
 /* Here you put the radius of the base of your platform. */
-#define PLATFORM_BASE_RADIUS 90 // 90
+#define PLATFORM_BASE_RADIUS 82 // 90
 /* Here you put the angle between two servos axis points */
 #define THETA_P_ANGLE degToRad(35) // 35 // 67
 /* Here you put the angle between two platform attachment points */
